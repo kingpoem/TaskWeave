@@ -1,0 +1,23 @@
+# Go
+bin/
+*.test
+
+# Wails / frontend
+frontend/dist/*
+frontend/node_modules/
+
+# Generated bundled uv binaries
+internal/runner/assets/uv/*
+!internal/runner/assets/uv/.gitkeep
+build/bin/
+
+# Local runtime data
+data/*.tmp
+logs/**/*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+docs/
