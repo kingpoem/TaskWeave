@@ -10,6 +10,7 @@ import (
 	"github.com/poem/TaskWeave/internal/runner"
 	"github.com/poem/TaskWeave/internal/scheduler"
 	"github.com/poem/TaskWeave/internal/task"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -115,6 +116,22 @@ func (a *App) GetSettings() (config.Settings, error) {
 
 func (a *App) SaveSettings(settings config.Settings) error {
 	return a.configStore.Save(settings)
+}
+
+func (a *App) SelectFilePath() (string, error) {
+	return wailsRuntime.OpenFileDialog(a.context(), wailsRuntime.OpenDialogOptions{
+		Title: "选择 Python 文件",
+		Filters: []wailsRuntime.FileFilter{
+			{DisplayName: "Python 文件 (*.py)", Pattern: "*.py"},
+			{DisplayName: "所有文件 (*.*)", Pattern: "*.*"},
+		},
+	})
+}
+
+func (a *App) SelectDirectoryPath() (string, error) {
+	return wailsRuntime.OpenDirectoryDialog(a.context(), wailsRuntime.OpenDialogOptions{
+		Title: "选择任务目录",
+	})
 }
 
 func (a *App) runScheduledTask(ctx context.Context, item task.Task) {

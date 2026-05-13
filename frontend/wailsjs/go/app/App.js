@@ -30,6 +30,14 @@ export function SaveSettings(arg1) {
   return window['go']['app']['App']['SaveSettings'](arg1);
 }
 
+export function SelectDirectoryPath() {
+  return window['go']['app']['App']['SelectDirectoryPath']();
+}
+
+export function SelectFilePath() {
+  return window['go']['app']['App']['SelectFilePath']();
+}
+
 export function UpdateTask(arg1, arg2) {
   return window['go']['app']['App']['UpdateTask'](arg1, arg2);
 }

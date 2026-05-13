@@ -17,4 +17,8 @@ export function RunTask(arg1:string):Promise<task.RunRecord>;
 
 export function SaveSettings(arg1:config.Settings):Promise<void>;
 
+export function SelectDirectoryPath():Promise<string>;
+
+export function SelectFilePath():Promise<string>;
+
 export function UpdateTask(arg1:string,arg2:task.Task):Promise<task.Task>;

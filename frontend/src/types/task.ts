@@ -17,6 +17,25 @@ export type Task = {
   updatedAt: string;
 };
 
+export type RunRecord = {
+  id: string;
+  taskId: string;
+  trigger: string;
+  status: "running" | "success" | "failed" | "canceled" | "skipped" | string;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  exitCode: number;
+  logPath: string;
+  errorSummary?: string;
+};
+
+export type Settings = {
+  uvPath: string;
+  defaultWorkDir: string;
+  logRetentionDays: number;
+};
+
 export type TaskFormValues = {
   name: string;
   type: TaskType;
@@ -37,4 +56,10 @@ export const emptyTaskForm: TaskFormValues = {
   enabled: true,
   workingDir: "",
   concurrencyPolicy: "skip",
+};
+
+export const defaultSettings: Settings = {
+  uvPath: "uv",
+  defaultWorkDir: "",
+  logRetentionDays: 30,
 };
