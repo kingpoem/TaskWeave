@@ -5,6 +5,7 @@ bin/
 # Wails / frontend
 frontend/dist/*
 frontend/node_modules/
+build/windows/
 
 # Generated bundled uv binaries
 internal/runner/assets/uv/*
@@ -12,6 +13,10 @@ internal/runner/assets/uv/*
 build/bin/
 
 # Local runtime data
+.gocache/
+.uv-cache/
+.chrome-profile/
+preview-taskweave.png
 data/*.tmp
 logs/**/*.log
 

@@ -41,8 +41,10 @@ export type TaskFormValues = {
   type: TaskType;
   path: string;
   entry: string;
+  commandText: string;
   cron: string;
   enabled: boolean;
+  envText: string;
   workingDir: string;
   concurrencyPolicy: ConcurrencyPolicy;
 };
@@ -52,8 +54,10 @@ export const emptyTaskForm: TaskFormValues = {
   type: "file",
   path: "",
   entry: "",
+  commandText: "",
   cron: "0 0 * * * *",
   enabled: true,
+  envText: "",
   workingDir: "",
   concurrencyPolicy: "skip",
 };

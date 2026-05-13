@@ -25,17 +25,41 @@ export function RunLogPage() {
     void loadRuns();
   }, []);
 
+  const failedRuns = runs.filter((run) => run.status === "failed").length;
+  const latestRun = runs[runs.length - 1];
+
   return (
-    <div>
-      <header className="page-header">
+    <div className="page-stack">
+      <header className="page-hero">
         <div>
+          <p className="eyebrow">RUN HISTORY</p>
           <h2>运行日志</h2>
-          <p>查看手动执行和定时调度产生的最近 100 条运行记录。</p>
+          <p>查看手动执行和定时调度产生的最近 100 条记录，快速定位失败任务。</p>
         </div>
-        <button className="secondary-button" type="button" onClick={() => void loadRuns()}>
-          刷新
-        </button>
+        <div className="hero-actions">
+          <button className="secondary-button" type="button" onClick={() => void loadRuns()}>
+            刷新
+          </button>
+        </div>
       </header>
+
+      <section className="stats-grid">
+        <article className="stat-card">
+          <span>TOTAL</span>
+          <strong>{runs.length}</strong>
+          <p>运行记录</p>
+        </article>
+        <article className="stat-card">
+          <span>FAILED</span>
+          <strong>{failedRuns}</strong>
+          <p>失败次数</p>
+        </article>
+        <article className="stat-card wide-stat">
+          <span>LATEST</span>
+          <strong>{latestRun ? statusLabel(latestRun.status) : "-"}</strong>
+          <p>{latestRun ? formatDateTime(latestRun.startedAt) : "暂无记录"}</p>
+        </article>
+      </section>
 
       {error && <p className="notice danger">{error}</p>}
       {loading && <p className="muted">正在加载日志...</p>}
@@ -44,6 +68,7 @@ export function RunLogPage() {
         <section className="table-panel" aria-label="运行日志列表">
           <div className="table-panel-header">
             <div>
+              <p className="eyebrow">RUN RECORDS</p>
               <h3>运行记录</h3>
               <p>包含触发方式、结果、耗时、退出码和日志文件位置。</p>
             </div>

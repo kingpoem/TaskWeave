@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { EmptyState } from "../components/EmptyState";
-import { taskService } from "../services/taskService";
+import { commandToText, envToText, taskService } from "../services/taskService";
 import {
   emptyTaskForm,
   type ConcurrencyPolicy,
@@ -9,7 +9,7 @@ import {
   type TaskFormValues,
   type TaskType,
 } from "../types/task";
-import { formatDateTime } from "../utils/format";
+import { formatDateTime, statusLabel } from "../utils/format";
 
 export function TaskListPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -52,8 +52,10 @@ export function TaskListPage() {
       type: task.type,
       path: task.path,
       entry: task.entry ?? "",
+      commandText: commandToText(task.command),
       cron: task.cron,
       enabled: task.enabled,
+      envText: envToText(task.env),
       workingDir: task.workingDir ?? "",
       concurrencyPolicy: task.concurrencyPolicy,
     });
@@ -117,8 +119,10 @@ export function TaskListPage() {
         type: task.type,
         path: task.path,
         entry: task.entry ?? "",
+        commandText: commandToText(task.command),
         cron: task.cron,
         enabled: !task.enabled,
+        envText: envToText(task.env),
         workingDir: task.workingDir ?? "",
         concurrencyPolicy: task.concurrencyPolicy,
       });
@@ -134,7 +138,7 @@ export function TaskListPage() {
     setMessage("");
     try {
       const record = await taskService.runTask(task.id);
-      setMessage(`「${task.name}」已运行，结果：${record.status}`);
+      setMessage(`「${task.name}」已运行，结果：${statusLabel(record.status)}`);
     } catch (err) {
       setError(errorText(err));
     }
@@ -161,15 +165,17 @@ export function TaskListPage() {
 
   const enabledTasks = tasks.filter((task) => task.enabled).length;
   const disabledTasks = tasks.length - enabledTasks;
+  const customCommandTasks = tasks.filter((task) => task.command && task.command.length > 0).length;
 
   return (
-    <div>
-      <header className="page-header" id="tasks">
+    <div className="page-stack">
+      <header className="page-hero" id="tasks">
         <div>
-          <h2>任务列表</h2>
-          <p>集中管理 Python 文件、目录任务和 Cron 定时调度。</p>
+          <p className="eyebrow">TASK CONTROL</p>
+          <h2>Python 任务调度</h2>
+          <p>集中管理脚本、目录任务、Cron 计划和运行策略。保持节奏，别让任务散落在终端里。</p>
         </div>
-        <div className="header-actions">
+        <div className="hero-actions">
           <button className="secondary-button" type="button" onClick={() => void loadTasks()}>
             刷新
           </button>
@@ -180,9 +186,10 @@ export function TaskListPage() {
       </header>
 
       <section className="stats-grid">
-        <StatCard label="全部任务" value={tasks.length} />
-        <StatCard label="已启用" value={enabledTasks} />
-        <StatCard label="已停用" value={disabledTasks} />
+        <StatCard label="TOTAL" title="全部任务" value={tasks.length} />
+        <StatCard label="READY" title="已启用" value={enabledTasks} />
+        <StatCard label="OFFLINE" title="已停用" value={disabledTasks} />
+        <StatCard label="CUSTOM" title="自定义命令" value={customCommandTasks} />
       </section>
 
       {message && <p className="notice success">{message}</p>}
@@ -193,8 +200,9 @@ export function TaskListPage() {
           <section className="modal-window" aria-modal="true" role="dialog">
             <div className="panel-header">
               <div>
+                <p className="eyebrow">{editingTask ? "EDIT JOB" : "NEW JOB"}</p>
                 <h3>{editingTask ? "编辑任务" : "新建任务"}</h3>
-                <p>在独立弹窗中保存任务配置，提交后会自动刷新定时调度。</p>
+                <p>保存后会自动刷新调度器。自定义命令留空时默认执行 uv run python。</p>
               </div>
               <button className="ghost-button" type="button" onClick={closeForm}>
                 关闭
@@ -225,7 +233,7 @@ export function TaskListPage() {
                 </select>
               </label>
 
-              <label>
+              <label className="wide-field">
                 文件或目录路径
                 <div className="path-picker">
                   <input
@@ -241,14 +249,14 @@ export function TaskListPage() {
                     type="button"
                     onClick={() => void browsePath("file")}
                   >
-                    浏览文件
+                    文件
                   </button>
                   <button
                     className="secondary-button"
                     type="button"
                     onClick={() => void browsePath("directory")}
                   >
-                    浏览目录
+                    目录
                   </button>
                 </div>
               </label>
@@ -262,11 +270,6 @@ export function TaskListPage() {
                 />
               </label>
 
-              <SchedulePicker
-                value={form.cron}
-                onChange={(cron) => setForm({ ...form, cron })}
-              />
-
               <label>
                 工作目录
                 <input
@@ -275,6 +278,30 @@ export function TaskListPage() {
                   placeholder="留空则使用任务路径推断"
                 />
               </label>
+
+              <label className="wide-field">
+                自定义命令
+                <input
+                  value={form.commandText}
+                  onChange={(event) => setForm({ ...form, commandText: event.target.value })}
+                  placeholder='可选，例如 python script.py 或 "C:\\Python\\python.exe" main.py'
+                />
+              </label>
+
+              <label className="wide-field">
+                环境变量
+                <textarea
+                  value={form.envText}
+                  onChange={(event) => setForm({ ...form, envText: event.target.value })}
+                  placeholder={"每行一个 KEY=VALUE，例如：\nUV_CACHE_DIR=D:\\code\\gocode\\TaskWeave\\TaskWeave\\.uv-cache"}
+                  rows={4}
+                />
+              </label>
+
+              <SchedulePicker
+                value={form.cron}
+                onChange={(cron) => setForm({ ...form, cron })}
+              />
 
               <label>
                 并发策略
@@ -293,13 +320,13 @@ export function TaskListPage() {
                 </select>
               </label>
 
-              <label className="checkbox-row">
+              <label className="switch-row">
                 <input
                   checked={form.enabled}
                   type="checkbox"
                   onChange={(event) => setForm({ ...form, enabled: event.target.checked })}
                 />
-                启用任务
+                <span>启用任务</span>
               </label>
 
               <div className="form-actions">
@@ -323,6 +350,7 @@ export function TaskListPage() {
         <section className="table-panel" aria-label="定时任务列表">
           <div className="table-panel-header">
             <div>
+              <p className="eyebrow">JOB LIST</p>
               <h3>定时任务</h3>
               <p>每条任务都可以立即运行、启停、编辑或删除。</p>
             </div>
@@ -347,19 +375,20 @@ export function TaskListPage() {
                   <tr key={task.id}>
                     <td>
                       <strong>{task.name}</strong>
-                      <small>ID：{task.id}</small>
+                      <small>ID: {task.id}</small>
                     </td>
                     <td>{typeLabel(task.type)}</td>
                     <td>{scheduleDescription(task.cron)}</td>
                     <td>
                       <span className={task.enabled ? "status enabled" : "status disabled"}>
-                        {task.enabled ? "已启用" : "已停用"}
+                        {task.enabled ? "READY" : "OFFLINE"}
                       </span>
                     </td>
                     <td>{policyLabel(task.concurrencyPolicy)}</td>
                     <td>
                       <span className="path-cell">{task.path}</span>
-                      {task.entry && <small>入口：{task.entry}</small>}
+                      {task.entry && <small>入口: {task.entry}</small>}
+                      {task.command && task.command.length > 0 && <small>命令: {task.command.join(" ")}</small>}
                     </td>
                     <td>{formatDateTime(task.updatedAt)}</td>
                     <td>
@@ -405,11 +434,12 @@ export function TaskListPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, title, value }: { label: string; title: string; value: number }) {
   return (
     <article className="stat-card">
       <span>{label}</span>
       <strong>{value}</strong>
+      <p>{title}</p>
     </article>
   );
 }
@@ -424,8 +454,8 @@ function validateForm(form: TaskFormValues) {
   if (!form.cron.trim()) {
     throw new Error("请选择执行计划");
   }
-  if (form.type === "directory" && !form.entry.trim()) {
-    throw new Error("目录任务需要填写入口文件");
+  if (form.type === "directory" && !form.entry.trim() && !form.commandText.trim()) {
+    throw new Error("目录任务需要填写入口文件，或提供自定义命令");
   }
 }
 
