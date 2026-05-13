@@ -6,10 +6,12 @@ import {
   type TaskFormValues,
 } from "../types/task";
 
+type TaskPayload = Omit<Task, "id" | "createdAt" | "updatedAt">;
+
 type WailsApp = {
   ListTasks?: () => Promise<Task[]>;
-  CreateTask?: (input: TaskFormValues) => Promise<Task>;
-  UpdateTask?: (id: string, input: TaskFormValues) => Promise<Task>;
+  CreateTask?: (input: TaskPayload) => Promise<Task>;
+  UpdateTask?: (id: string, input: TaskPayload) => Promise<Task>;
   DeleteTask?: (id: string) => Promise<void>;
   RunTask?: (id: string) => Promise<RunRecord>;
   RecentRuns?: (limit: number) => Promise<RunRecord[]>;
@@ -43,27 +45,28 @@ export const taskService = {
   },
 
   async createTask(input: TaskFormValues): Promise<Task> {
+    const payload = normalizeInput(input);
     const createTask = window.go?.app?.App?.CreateTask;
     if (createTask) {
-      return createTask(input);
+      return createTask(payload);
     }
 
     const now = new Date().toISOString();
     const task: Task = {
-      ...normalizeInput(input),
+      ...payload,
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
     };
-    const tasks = [...readFallbackTasks(), task];
-    writeFallbackTasks(tasks);
+    writeFallbackTasks([...readFallbackTasks(), task]);
     return task;
   },
 
   async updateTask(id: string, input: TaskFormValues): Promise<Task> {
+    const payload = normalizeInput(input);
     const updateTask = window.go?.app?.App?.UpdateTask;
     if (updateTask) {
-      return updateTask(id, input);
+      return updateTask(id, payload);
     }
 
     const tasks = readFallbackTasks();
@@ -74,7 +77,7 @@ export const taskService = {
 
     const updated: Task = {
       ...existing,
-      ...normalizeInput(input),
+      ...payload,
       updatedAt: new Date().toISOString(),
     };
     writeFallbackTasks(tasks.map((task) => (task.id === id ? updated : task)));
@@ -168,17 +171,55 @@ export const taskService = {
   },
 };
 
-function normalizeInput(input: TaskFormValues): Omit<Task, "id" | "createdAt" | "updatedAt"> {
+function normalizeInput(input: TaskFormValues): TaskPayload {
+  const command = splitCommand(input.commandText);
+  const env = parseEnv(input.envText);
+
   return {
     name: input.name.trim(),
     type: input.type,
     path: input.path.trim(),
     entry: input.entry.trim() || undefined,
+    command: command.length > 0 ? command : undefined,
     cron: input.cron.trim(),
     enabled: input.enabled,
+    env: Object.keys(env).length > 0 ? env : undefined,
     workingDir: input.workingDir.trim() || undefined,
     concurrencyPolicy: input.concurrencyPolicy,
   };
+}
+
+export function commandToText(command?: string[]) {
+  return command?.join(" ") ?? "";
+}
+
+export function envToText(env?: Record<string, string>) {
+  return Object.entries(env ?? {})
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n");
+}
+
+function splitCommand(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return [];
+  }
+  return trimmed.match(/"[^"]*"|'[^']*'|\S+/g)?.map((part) => part.replace(/^["']|["']$/g, "")) ?? [];
+}
+
+function parseEnv(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((env, line) => {
+      const index = line.indexOf("=");
+      if (index <= 0) {
+        return env;
+      }
+      env[line.slice(0, index).trim()] = line.slice(index + 1).trim();
+      return env;
+    }, {});
 }
 
 function readFallbackTasks(): Task[] {

@@ -40,11 +40,12 @@ export function SettingsPage() {
   }
 
   return (
-    <div>
-      <header className="page-header">
+    <div className="page-stack">
+      <header className="page-hero">
         <div>
-          <h2>设置</h2>
-          <p>配置任务运行环境、日志保留策略和默认工作目录。</p>
+          <p className="eyebrow">SYSTEM CONFIG</p>
+          <h2>运行设置</h2>
+          <p>配置 uv 路径、默认工作目录和日志保留策略，让本地任务运行环境保持一致。</p>
         </div>
       </header>
 
@@ -54,6 +55,7 @@ export function SettingsPage() {
       <section className="panel">
         <div className="panel-header compact">
           <div>
+            <p className="eyebrow">RUNTIME</p>
             <h3>运行配置</h3>
             <p>这些配置会写入本地配置文件，供后端运行器读取。</p>
           </div>
@@ -72,7 +74,7 @@ export function SettingsPage() {
             <input
               value={settings.defaultWorkDir}
               onChange={(event) => setSettings({ ...settings, defaultWorkDir: event.target.value })}
-              placeholder="/path/to/workspace"
+              placeholder="D:\\code\\workspace"
             />
           </label>
           <label>

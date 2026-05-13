@@ -8,10 +8,10 @@ import { TaskListPage } from "./pages/TaskListPage";
 type Theme = "light" | "dark";
 type Page = "tasks" | "logs" | "settings";
 
-const navItems: Array<{ id: Page; label: string }> = [
-  { id: "tasks", label: "定时任务" },
-  { id: "logs", label: "运行日志" },
-  { id: "settings", label: "设置" },
+const navItems: Array<{ id: Page; label: string; meta: string }> = [
+  { id: "tasks", label: "任务", meta: "JOBS" },
+  { id: "logs", label: "日志", meta: "LOGS" },
+  { id: "settings", label: "设置", meta: "CFG" },
 ];
 
 export default function App() {
@@ -51,10 +51,10 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="brand">
-            <span className="brand-mark">T</span>
+            <span className="brand-mark">TW</span>
             <div>
+              <p>PYTHON JOB CONTROL</p>
               <h1>TaskWeave</h1>
-              <p>Python 任务调度</p>
             </div>
           </div>
           <nav className="sidebar-nav" aria-label="主导航">
@@ -65,6 +65,7 @@ export default function App() {
                 type="button"
                 onClick={() => setActivePage(item.id)}
               >
+                <span>{item.meta}</span>
                 {item.label}
               </button>
             ))}
@@ -79,7 +80,7 @@ export default function App() {
             type="button"
             onClick={() => setTheme(nextTheme)}
           >
-            {theme === "dark" ? "切换亮色" : "切换暗色"}
+            {theme === "dark" ? "亮色模式" : "暗色模式"}
           </button>
         </div>
       </aside>
